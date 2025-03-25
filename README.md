@@ -1,70 +1,93 @@
-# Getting Started with Create React App
+---
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# **Certificate Tracker - Setup Guide**  
 
-## Available Scripts
+This guide provides step-by-step instructions to set up and run the **Certificate Verification System** using **Ganache, MetaMask, Remix IDE, and React**.
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## **1️⃣ Setup Ganache**  
+1. Open **Ganache** and click on **Quickstart**.  
+2. Select the **1st Ethereum account**.  
+3. Click on the **key symbol** and **copy the private key**.  
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## **2️⃣ Setup MetaMask**  
+### **Enable Test Networks & Import Ganache Account**  
+1. Open **MetaMask** and go to **Networks (top left corner)**.  
+2. Enable **Show test networks**.  
+3. Click on **Add Custom Network**.  
 
-### `npm test`
+   ![MetaMask Network Setup](https://i.imgur.com/NfIK0ia.png)  
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+4. Click on your **MetaMask Account (top center)**.  
+5. Click **Add account or hardware wallet → Import account**.  
+6. Paste the **private key** copied from **Ganache** and click **Import**.  
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## **3️⃣ Deploy Smart Contract on Remix IDE**  
+1. Open **Remix IDE**.  
+2. In the **contracts folder**, paste your **`CertificateTracker.sol`** code.  
+3. Compile it using **Solidity Compiler v0.8.0**.  
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### **Deploy the Smart Contract**  
+1. Go to the **Deploy & Run Transactions** tab.  
+2. In **Environment**, select:  
+   - **Custom - External HTTP Provider**.  
+   - Change **`http://127.0.0.1:8545`** → **`http://127.0.0.1:7545`** (or the port in Ganache).  
+3. Select the **1st account** and click **Deploy**.  
+4. In the **Terminal**, expand your **deployed contract**.  
+5. Copy the **contract address** (you’ll need it for the next steps).  
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### **Add Certificate Data**  
+- Under **Deployed Contracts**, enter sample certificate details for later verification.  
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## **4️⃣ Clone & Setup Project Locally**  
+### **Clone Repository**  
+Open **your local IDE (VS Code, etc.)** and run:  
+```sh
+git clone https://github.com/darishSFIT/Certificate-Tracker
+```
+or download & extract [this ZIP](https://github.com/darishSFIT/Certificate-Tracker/archive/refs/heads/main.zip) in your project folder.  
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## **5️⃣ Update Configuration Files**  
+### **Update `.env` File**  
+1. Open `.env` file in your project.  
+2. Paste the **contract address** you copied from Remix IDE.  
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### **Update `app.js`**  
+1. Open **`app.js`**.  
+2. On **line 8**, update the `contractAddress` with the **same copied contract address**.  
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## **6️⃣ Install Dependencies & Run the UI**  
+Run the following commands in the terminal:  
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```sh
+npm install
+npm start
+```
 
-### Code Splitting
+🚀 Your **Certificate Tracker** application should now be running! 🎉  
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+---
 
-### Analyzing the Bundle Size
+## **📌 Summary of Steps**  
+✔ **Ganache:** Copy **private key**.  
+✔ **MetaMask:** Import account using **private key**.  
+✔ **Remix IDE:** Deploy **`CertificateTracker.sol`** and copy **contract address**.  
+✔ **Clone Project:** Set up repo & update **contract address**.  
+✔ **Run UI:** Install dependencies & start the **React app**.  
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+💡 **Now you can verify, add, and fetch certificates using the decentralized system!**  
 
-### Making a Progressive Web App
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Let me know if you need further improvements! 🚀🔥
