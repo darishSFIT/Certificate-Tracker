@@ -1,6 +1,4 @@
----
-
-# **Certificate Tracker - Setup Guide**  
+# **[Certificate Tracker](https://docs.google.com/presentation/d/1uJ8Jf2m942uzLYJcpbtVhoVfmlEGJeluoRO8wgf4QVM/edit?usp=sharing) - Setup Guide**  
 
 This guide provides step-by-step instructions to set up and run the **Certificate Verification System** using **Ganache, MetaMask, Remix IDE, and React**.
 
