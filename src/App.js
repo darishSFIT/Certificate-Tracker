@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import contractABI from './contractABI.json';
 import axios from 'axios';
+// import logo from './logo.svg';
+import Header from './Header';
+import './App.css';
 
-//var cont_addr = "0x45578e09e368a95eb3ca396da7a12a86fe0fe8e5";
+//var cont_addr = "enter_here";
 //console.log("Contract Address:", cont_addr);
-const contractAddress = '0xae692a1ad75de88ce8d58a4b7c7a837c5d8b1430'; // Replace with your contract's address
+const contractAddress = '0x89ba4c53646a95cb9492880a1e246f6b0946fbe5'; // Replace with your contract's address
 
 // Pinata configuration
 const PINATA_API_KEY = 'e648d34f4dbbe45a91c7';
@@ -16,11 +19,30 @@ function App() {
         id: '',
         name: '',
         owner: '',
-        certification: ''
+        certification: '',
+        password: '',
+        confirmPassword: '',
+        nickname: ''
     });
     const [selectedFile, setSelectedFile] = useState(null);
     const [CertificateInfo, setCertificateInfo] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [verificationPassword, setVerificationPassword] = useState('');
+    const [searchBy, setSearchBy] = useState('id'); // 'id' or 'nickname'
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [showSearchForm, setShowSearchForm] = useState(false);
+    const [darkMode, setDarkMode] = useState(false);
+
+    // Effect to handle dark mode
+    useEffect(() => {
+        if (darkMode) {
+            document.documentElement.classList.add('dark');
+            document.body.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            document.body.classList.remove('dark');
+        }
+    }, [darkMode]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -41,6 +63,11 @@ function App() {
             return;
         }
 
+        if (!verificationPassword) {
+            alert("Please enter the certificate password");
+            return;
+        }
+
         const provider = new ethers.BrowserProvider(window.ethereum); 
         await provider.ready; 
         provider.getNetwork = async () => ({ chainId: 1337, name: 'ganache' });
@@ -50,23 +77,33 @@ function App() {
 
         setLoading(true);
         try {
-            // Get all certificate info including CID
-            const result = await contract.verifyCertificate(certificateData.id);
-            console.log("Verification Result:", result); // Debug log
+            let result;
+            let cid;
+            let certificateId;
 
-            if (!result) {
-                throw new Error("Certificate not found");
+            if (searchBy === 'id') {
+                certificateId = certificateData.id;
+            } else {
+                // Get the certificate ID from nickname first
+                try {
+                    certificateId = await contract.getIdFromNickname(certificateData.nickname);
+                } catch (error) {
+                    throw new Error("Nickname not found");
+                }
             }
 
-            // Parse the result properly with CID
+            // Now verify the certificate using the ID
+            result = await contract.verifyCertificate(certificateId, verificationPassword);
+            cid = await contract.getCertificateCID(certificateId, verificationPassword);
+
             setCertificateInfo({
                 id: result[0],
                 name: result[1],
                 owner: result[2],
                 certification: result[3],
                 isAuthentic: result[4],
-                cid: result[5],
-                pdfUrl: `https://gateway.pinata.cloud/ipfs/${result[5]}`
+                cid: cid,
+                pdfUrl: `https://gateway.pinata.cloud/ipfs/${cid}`
             });
         } catch (error) {
             console.error("Detailed Error:", error);
@@ -129,9 +166,18 @@ function App() {
             return;
         }
 
+        if (certificateData.password !== certificateData.confirmPassword) {
+            alert("Passwords do not match");
+            return;
+        }
+
+        if (!certificateData.password) {
+            alert("Please enter a password");
+            return;
+        }
+
         setLoading(true);
         try {
-            // Upload file to Pinata first
             const ipfsCid = await uploadToIPFS(selectedFile);
             
             const provider = new ethers.BrowserProvider(window.ethereum); 
@@ -146,7 +192,9 @@ function App() {
                 certificateData.name,
                 certificateData.owner,
                 certificateData.certification,
-                ipfsCid
+                ipfsCid,
+                certificateData.password,
+                certificateData.nickname
             );
 
             await tx.wait();
@@ -157,7 +205,10 @@ function App() {
                 id: '',
                 name: '',
                 owner: '',
-                certification: ''
+                certification: '',
+                password: '',
+                confirmPassword: '',
+                nickname: ''
             });
             setSelectedFile(null);
         } catch (error) {
@@ -168,218 +219,359 @@ function App() {
         }
     }
 
-    // Function to fetch Certificate details
-    async function fetchCertificateDetails() {
-        if (!window.ethereum) {
-            alert("Please install MetaMask");
-            return;
-        }
-
-        const provider = new ethers.BrowserProvider(window.ethereum); 
-        await provider.ready; 
-        provider.getNetwork = async () => ({ chainId: 1337, name: 'ganache' });
-
-        const signer = await provider.getSigner();
-        const contract = new ethers.Contract(contractAddress, contractABI, signer);
-
-        try {
-            // First get the basic certificate info
-            const result = await contract.verifyCertificate(certificateData.id);
-            
-            // Then get the IPFS CID
-            const cid = await contract.getCertificateCID(certificateData.id);
-
-            setCertificateInfo({
-                id: result[0],
-                name: result[1],
-                owner: result[2],
-                certification: result[3],
-                isAuthentic: result[4],
-                pdfUrl: `https://gateway.pinata.cloud/ipfs/${cid}`
-            });
-            
-            alert("✅ Certificate found!");
-        } catch (error) {
-            console.error("Detailed Error:", error);
-            alert("❌ Error fetching Certificate: " + (error.message || "Unknown error"));
-        }
-    }
-
     return (
-        <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto">
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                        Certificate Tracker
-                    </h1>
-                    <p className="text-lg text-gray-600">
-                        Securely store and verify certificates using blockchain technology
-                    </p>
-                </div>
+        <div className={`flex flex-col min-h-screen w-full transition-colors duration-300 ${
+            darkMode ? 'bg-black text-white' : 'bg-gray-50'
+        }`}>
+            <Header 
+                onAddClick={(show = true) => {
+                    setShowAddForm(show);
+                    if (show) setShowSearchForm(false);
+                }}
+                onSearchClick={(show = true) => {
+                    setShowSearchForm(show);
+                    if (show) setShowAddForm(false);
+                }}
+                showAddForm={showAddForm}
+                showSearchForm={showSearchForm}
+                darkMode={darkMode}
+                setDarkMode={setDarkMode}
+            />
 
-                <div className="bg-white shadow-xl rounded-lg overflow-hidden mb-8">
-                    <div className="p-6">
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-                            Add New Certificate
-                        </h2>
-                        <div className="space-y-4">
-                            <input
-                                type="text"
-                                name="id"
-                                placeholder="Certificate ID"
-                                value={certificateData.id}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition duration-200"
-                            />
-                            <input
-                                type="text"
-                                name="name"
-                                placeholder="Name"
-                                value={certificateData.name}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition duration-200"
-                            />
-                            <input
-                                type="text"
-                                name="owner"
-                                placeholder="Owner"
-                                value={certificateData.owner}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition duration-200"
-                            />
-                            <input
-                                type="text"
-                                name="certification"
-                                placeholder="Certification"
-                                value={certificateData.certification}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition duration-200"
-                            />
-                            <div className="mt-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Upload Certificate (PDF)
-                                </label>
-                                <input
-                                    type="file"
-                                    accept=".pdf"
-                                    onChange={handleFileChange}
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition duration-200"
-                                />
+            {/* Main Content */}
+            <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 pb-12 pt-20 md:pt-20">
+                <div className="w-full max-w-7xl mx-auto">
+                    {/* Home Page Content */}
+                    {!showAddForm && !showSearchForm && !CertificateInfo && (
+                        <div className="space-y-8 sm:space-y-12 lg:space-y-16 py-6 sm:py-8 fade-in">
+                            {/* Hero Section */}
+                            <div className="text-center max-w-4xl mx-auto">
+                                <h1 className={`text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 ${darkMode ? 'text-white' : 'text-gray-900'} leading-tight`}>
+                                    Secure Certificate Management
+                                    <span className={darkMode ? 'text-samsung-blue-light' : 'text-primary'}> on Blockchain</span>
+                                </h1>
+                                <p className={`text-lg sm:text-xl ${darkMode ? 'text-gray-300' : 'text-gray-600'} max-w-3xl mx-auto`}>
+                                    Store and verify certificates securely using blockchain technology and IPFS storage
+                                </p>
                             </div>
-                            <button
-                                onClick={addCertificate}
-                                disabled={loading}
-                                className={`w-full py-3 px-4 rounded-lg text-white font-semibold ${
-                                    loading
-                                        ? 'bg-gray-400 cursor-not-allowed'
-                                        : 'bg-primary hover:bg-blue-600 transform hover:scale-105'
-                                } transition duration-200`}
-                            >
-                                {loading ? (
-                                    <span className="flex items-center justify-center">
-                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+
+                            {/* Features Grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                                <div className={`p-6 ${darkMode ? 'bg-dark-card border border-dark-border' : ''} rounded-xl hover:-translate-y-1 transition-all duration-300`}>
+                                    <div className={darkMode ? 'text-samsung-blue-light mb-4' : 'text-primary mb-4'}>
+                                        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                         </svg>
-                                        Adding...
-                                    </span>
-                                ) : (
-                                    'Add Certificate'
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white shadow-xl rounded-lg overflow-hidden mb-8">
-                    <div className="p-6">
-                        <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-                            Verify Certificate
-                        </h2>
-                        <div className="space-y-4">
-                            <input
-                                type="text"
-                                name="id"
-                                placeholder="Enter Certificate ID to verify"
-                                value={certificateData.id}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-success focus:border-transparent transition duration-200"
-                            />
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <button
-                                    onClick={verifyCertificate}
-                                    disabled={loading}
-                                    className={`w-full py-3 px-4 rounded-lg text-white font-semibold ${
-                                        loading
-                                            ? 'bg-gray-400 cursor-not-allowed'
-                                            : 'bg-success hover:bg-green-600 transform hover:scale-105'
-                                    } transition duration-200`}
-                                >
-                                    {loading ? 'Verifying...' : 'Verify Certificate'}
-                                </button>
-                                <button
-                                    onClick={fetchCertificateDetails}
-                                    className="w-full py-3 px-4 rounded-lg bg-warning hover:bg-yellow-500 text-black font-semibold transform hover:scale-105 transition duration-200"
-                                >
-                                    Fetch Certificate Details
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {CertificateInfo && (
-                    <div className="bg-white shadow-xl rounded-lg overflow-hidden animate-fade-in">
-                        <div className="p-6">
-                            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-                                Certificate Information
-                            </h2>
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="p-4 bg-gray-50 rounded-lg">
-                                        <p className="text-sm text-gray-600">ID</p>
-                                        <p className="font-semibold text-gray-900">{CertificateInfo.id || "N/A"}</p>
                                     </div>
-                                    <div className="p-4 bg-gray-50 rounded-lg">
-                                        <p className="text-sm text-gray-600">Name</p>
-                                        <p className="font-semibold text-gray-900">{CertificateInfo.name || "N/A"}</p>
-                                    </div>
-                                    <div className="p-4 bg-gray-50 rounded-lg">
-                                        <p className="text-sm text-gray-600">Owner</p>
-                                        <p className="font-semibold text-gray-900">{CertificateInfo.owner || "N/A"}</p>
-                                    </div>
-                                    <div className="p-4 bg-gray-50 rounded-lg">
-                                        <p className="text-sm text-gray-600">Certification</p>
-                                        <p className="font-semibold text-gray-900">{CertificateInfo.certification || "N/A"}</p>
-                                    </div>
-                                </div>
-                                <div className="p-4 bg-gray-50 rounded-lg">
-                                    <p className="text-sm text-gray-600">Status</p>
-                                    <p className={`font-semibold ${CertificateInfo.isAuthentic ? 'text-green-600' : 'text-red-600'}`}>
-                                        {CertificateInfo.isAuthentic ? "✓ Authentic" : "✗ Tampered"}
+                                    <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                        Secure Storage
+                                    </h3>
+                                    <p className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                                        Your certificates are securely stored on the blockchain with password protection
                                     </p>
                                 </div>
-                                <div className="p-4 bg-gray-50 rounded-lg">
-                                    <p className="text-sm text-gray-600">IPFS CID</p>
-                                    <p className="font-mono text-sm break-all">{CertificateInfo.cid || "N/A"}</p>
-                                </div>
-                                {CertificateInfo.pdfUrl && (
-                                    <div className="mt-6">
-                                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Certificate PDF</h3>
-                                        <div className="aspect-[16/9] rounded-lg overflow-hidden border border-gray-200">
-                                            <iframe
-                                                src={CertificateInfo.pdfUrl}
-                                                className="w-full h-full"
-                                                title="Certificate PDF"
-                                            />
-                                        </div>
+
+                                <div className={`p-6 ${darkMode ? 'bg-dark-card border border-dark-border' : ''} rounded-xl hover:-translate-y-1 transition-all duration-300`}>
+                                    <div className={darkMode ? 'text-samsung-blue-light mb-4' : 'text-primary mb-4'}>
+                                        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                        </svg>
                                     </div>
-                                )}
+                                    <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                        Tamper-Proof
+                                    </h3>
+                                    <p className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                                        Blockchain ensures your certificates cannot be modified once stored
+                                    </p>
+                                </div>
+
+                                <div className={`p-6 ${darkMode ? 'bg-dark-card border border-dark-border' : ''} rounded-xl hover:-translate-y-1 transition-all duration-300`}>
+                                    <div className={darkMode ? 'text-samsung-blue-light mb-4' : 'text-primary mb-4'}>
+                                        <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </div>
+                                    <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                        Easy Verification
+                                    </h3>
+                                    <p className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                                        Verify certificates instantly using ID or nickname
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* How It Works Section */}
+                            <div className="card p-6 sm:p-8">
+                                <h2 className={`text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 ${
+                                    darkMode ? 'text-white' : 'text-gray-900'
+                                }`}>
+                                    How It Works
+                                </h2>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+                                    <div className="text-center">
+                                        <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                                            <span className="text-primary text-2xl font-bold">1</span>
+                                        </div>
+                                        <h3 className="font-semibold mb-2">Upload Certificate</h3>
+                                        <p className="text-gray-600 text-sm">Upload your PDF certificate and fill in the details</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                                            <span className="text-primary text-2xl font-bold">2</span>
+                                        </div>
+                                        <h3 className="font-semibold mb-2">Set Password</h3>
+                                        <p className="text-gray-600 text-sm">Secure your certificate with a password</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                                            <span className="text-primary text-2xl font-bold">3</span>
+                                        </div>
+                                        <h3 className="font-semibold mb-2">Store on Blockchain</h3>
+                                        <p className="text-gray-600 text-sm">Certificate is stored securely on blockchain</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                                            <span className="text-primary text-2xl font-bold">4</span>
+                                        </div>
+                                        <h3 className="font-semibold mb-2">Verify Anytime</h3>
+                                        <p className="text-gray-600 text-sm">Access and verify your certificate using ID or nickname</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                    )}
+
+                    {/* Forms and Certificate Info */}
+                    <div className="w-full max-w-4xl mx-auto">
+                        {showAddForm && (
+                            <div className="card p-6 sm:p-8 mb-8 fade-in">
+                                <h2 className={`text-2xl font-semibold mb-6 ${
+                                    darkMode ? 'text-white' : 'text-gray-900'
+                                }`}>
+                                    Add New Certificate
+                                </h2>
+                                <div className="space-y-4">
+                                    <div className="form-group">
+                                        <input
+                                            type="text"
+                                            name="id"
+                                            placeholder="Certificate ID"
+                                            value={certificateData.id}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            placeholder="Name"
+                                            value={certificateData.name}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <input
+                                            type="text"
+                                            name="owner"
+                                            placeholder="Owner"
+                                            value={certificateData.owner}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <input
+                                            type="text"
+                                            name="certification"
+                                            placeholder="Certification"
+                                            value={certificateData.certification}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            placeholder="Set Password"
+                                            value={certificateData.password}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <input
+                                            type="password"
+                                            name="confirmPassword"
+                                            placeholder="Confirm Password"
+                                            value={certificateData.confirmPassword}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <input
+                                            type="text"
+                                            name="nickname"
+                                            placeholder="Nickname (Optional)"
+                                            value={certificateData.nickname}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                        />
+                                    </div>
+                                    <div className="mt-4">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Upload Certificate (PDF)
+                                        </label>
+                                        <input
+                                            type="file"
+                                            accept=".pdf"
+                                            onChange={handleFileChange}
+                                            className="form-input"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={addCertificate}
+                                        disabled={loading}
+                                        className={`w-full py-3 px-4 rounded-lg text-white font-semibold ${
+                                            loading
+                                                ? 'bg-gray-400 cursor-not-allowed'
+                                                : 'btn-primary hover:shadow-lg'
+                                        } transition duration-200`}
+                                    >
+                                        {loading ? 'Adding...' : 'Add Certificate'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {showSearchForm && (
+                            <div className="card p-6 sm:p-8 mb-8 fade-in">
+                                <h2 className={`text-2xl font-semibold mb-6 ${
+                                    darkMode ? 'text-white' : 'text-gray-900'
+                                }`}>
+                                    Verify Certificate
+                                </h2>
+                                <div className="space-y-4">
+                                    <div className="flex space-x-4 mb-4">
+                                        <button
+                                            onClick={() => setSearchBy('id')}
+                                            className={`px-4 py-2 rounded-lg ${
+                                                searchBy === 'id'
+                                                    ? 'bg-primary text-white'
+                                                    : 'bg-gray-200 text-gray-700'
+                                            }`}
+                                        >
+                                            Search by ID
+                                        </button>
+                                        <button
+                                            onClick={() => setSearchBy('nickname')}
+                                            className={`px-4 py-2 rounded-lg ${
+                                                searchBy === 'nickname'
+                                                    ? 'bg-primary text-white'
+                                                    : 'bg-gray-200 text-gray-700'
+                                            }`}
+                                        >
+                                            Search by Nickname
+                                        </button>
+                                    </div>
+                                    {searchBy === 'id' ? (
+                                        <input
+                                            type="text"
+                                            name="id"
+                                            placeholder="Enter Certificate ID"
+                                            value={certificateData.id}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                        />
+                                    ) : (
+                                        <input
+                                            type="text"
+                                            name="nickname"
+                                            placeholder="Enter Certificate Nickname"
+                                            value={certificateData.nickname}
+                                            onChange={handleInputChange}
+                                            className="form-input"
+                                        />
+                                    )}
+                                    <input
+                                        type="password"
+                                        placeholder="Enter Certificate Password"
+                                        value={verificationPassword}
+                                        onChange={(e) => setVerificationPassword(e.target.value)}
+                                        className="form-input"
+                                    />
+                                    <button
+                                        onClick={verifyCertificate}
+                                        disabled={loading}
+                                        className={`w-full py-3 px-4 rounded-lg text-white font-semibold ${
+                                            loading
+                                                ? 'bg-gray-400 cursor-not-allowed'
+                                                : 'btn-primary hover:shadow-lg'
+                                        } transition duration-200`}
+                                    >
+                                        {loading ? 'Verifying...' : 'Verify Certificate'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {CertificateInfo && (
+                            <div className="card p-6 sm:p-8 fade-in">
+                                <h2 className={`text-2xl font-semibold mb-6 ${
+                                    darkMode ? 'text-white' : 'text-gray-900'
+                                }`}>
+                                    Certificate Information
+                                </h2>
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="p-4 bg-gray-50 rounded-lg">
+                                            <p className="text-sm text-gray-600">ID</p>
+                                            <p className="font-semibold text-gray-900">{CertificateInfo.id || "N/A"}</p>
+                                        </div>
+                                        <div className="p-4 bg-gray-50 rounded-lg">
+                                            <p className="text-sm text-gray-600">Name</p>
+                                            <p className="font-semibold text-gray-900">{CertificateInfo.name || "N/A"}</p>
+                                        </div>
+                                        <div className="p-4 bg-gray-50 rounded-lg">
+                                            <p className="text-sm text-gray-600">Owner</p>
+                                            <p className="font-semibold text-gray-900">{CertificateInfo.owner || "N/A"}</p>
+                                        </div>
+                                        <div className="p-4 bg-gray-50 rounded-lg">
+                                            <p className="text-sm text-gray-600">Certification</p>
+                                            <p className="font-semibold text-gray-900">{CertificateInfo.certification || "N/A"}</p>
+                                        </div>
+                                    </div>
+                                    <div className="p-4 bg-gray-50 rounded-lg">
+                                        <p className="text-sm text-gray-600">Status</p>
+                                        <p className={`font-semibold ${CertificateInfo.isAuthentic ? 'text-green-600' : 'text-red-600'}`}>
+                                            {CertificateInfo.isAuthentic ? "✓ Authentic" : "✗ Tampered"}
+                                        </p>
+                                    </div>
+                                    <div className="p-4 bg-gray-50 rounded-lg">
+                                        <p className="text-sm text-gray-600">IPFS CID</p>
+                                        <p className="font-mono text-sm break-all">{CertificateInfo.cid || "N/A"}</p>
+                                    </div>
+                                    {CertificateInfo.pdfUrl && (
+                                        <div className="mt-6">
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Certificate PDF</h3>
+                                            <div className="aspect-[16/9] rounded-lg overflow-hidden border border-gray-200">
+                                                <iframe
+                                                    src={CertificateInfo.pdfUrl}
+                                                    className="w-full h-full"
+                                                    title="Certificate PDF"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
-                )}
-            </div>
+                </div>
+            </main>
         </div>
     );
 }

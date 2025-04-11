@@ -5,7 +5,9 @@
             { "name": "_name", "type": "string" },
             { "name": "_owner", "type": "string" },
             { "name": "_certification", "type": "string" },
-            { "name": "_cid", "type": "string" }
+            { "name": "_cid", "type": "string" },
+            { "name": "_password", "type": "string" },
+            { "name": "_nickname", "type": "string" }
         ],
         "name": "addCertificate",
         "outputs": [],
@@ -13,21 +15,54 @@
         "type": "function"
     },
     {
-        "inputs": [{ "name": "_id", "type": "string" }],
+        "inputs": [
+            { "name": "_id", "type": "string" },
+            { "name": "_password", "type": "string" }
+        ],
         "name": "verifyCertificate",
         "outputs": [
             { "name": "", "type": "string" },
             { "name": "", "type": "string" },
             { "name": "", "type": "string" },
             { "name": "", "type": "string" },
-            { "name": "", "type": "bool" }
+            { "name": "", "type": "bool" },
+            { "name": "", "type": "string" }
         ],
         "stateMutability": "view",
         "type": "function"
     },
     {
-        "inputs": [{ "name": "_id", "type": "string" }],
+        "inputs": [
+            { "name": "_nickname", "type": "string" },
+            { "name": "_password", "type": "string" }
+        ],
+        "name": "getCertificateByNickname",
+        "outputs": [
+            { "name": "", "type": "string" },
+            { "name": "", "type": "string" },
+            { "name": "", "type": "string" },
+            { "name": "", "type": "string" },
+            { "name": "", "type": "bool" },
+            { "name": "", "type": "string" }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            { "name": "_id", "type": "string" },
+            { "name": "_password", "type": "string" }
+        ],
         "name": "getCertificateCID",
+        "outputs": [{ "name": "", "type": "string" }],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            { "name": "_nickname", "type": "string" }
+        ],
+        "name": "getIdFromNickname",
         "outputs": [{ "name": "", "type": "string" }],
         "stateMutability": "view",
         "type": "function"
