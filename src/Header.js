@@ -29,7 +29,7 @@ function Header({ onAddClick, onSearchClick, showAddForm, showSearchForm, darkMo
       current: showAddForm 
     },
     { 
-      name: 'Verify Certificate', 
+      name: 'View Certificate', 
       icon: <MagnifyingGlassIcon className="w-5 h-5 mr-2" aria-hidden="true" />, 
       onClick: () => onSearchClick(),
       current: showSearchForm 
@@ -61,10 +61,10 @@ function Header({ onAddClick, onSearchClick, showAddForm, showSearchForm, darkMo
                   <img
                     className="h-8 w-auto"
                     src={process.env.PUBLIC_URL + '/logo192.png'}
-                    alt="Certificate Tracker"
+                    alt="Secure Certificate Storage"
                   />
                   <span className={`ml-2 text-lg font-bold hidden sm:block ${darkMode ? 'text-blue-400' : 'text-white'}`}>
-                    Certificate Tracker
+                    Secure Certificate Storage
                   </span>
                 </div>
               </div>

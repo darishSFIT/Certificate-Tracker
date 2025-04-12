@@ -8,7 +8,7 @@ import './App.css';
 
 //var cont_addr = "enter_here";
 //console.log("Contract Address:", cont_addr);
-const contractAddress = '0x89ba4c53646a95cb9492880a1e246f6b0946fbe5'; // Replace with your contract's address
+const contractAddress = '0xd9633098c794ba2dceabb300807570869bb25bd2'; // Replace with your contract's address
 
 // Pinata configuration
 const PINATA_API_KEY = 'e648d34f4dbbe45a91c7';
@@ -247,11 +247,11 @@ function App() {
                             {/* Hero Section */}
                             <div className="text-center max-w-4xl mx-auto">
                                 <h1 className={`text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 ${darkMode ? 'text-white' : 'text-gray-900'} leading-tight`}>
-                                    Secure Certificate Management
+                                    Secure Certificate Stoage
                                     <span className={darkMode ? 'text-samsung-blue-light' : 'text-primary'}> on Blockchain</span>
                                 </h1>
                                 <p className={`text-lg sm:text-xl ${darkMode ? 'text-gray-300' : 'text-gray-600'} max-w-3xl mx-auto`}>
-                                    Store and verify certificates securely using blockchain technology and IPFS storage
+                                    Store and manage certificates securely using blockchain technology and IPFS storage
                                 </p>
                             </div>
 
@@ -292,10 +292,10 @@ function App() {
                                         </svg>
                                     </div>
                                     <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                        Easy Verification
+                                        Easy Access
                                     </h3>
                                     <p className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
-                                        Verify certificates instantly using ID or nickname
+                                        Access your certificates instantly using ID or nickname from anywhere
                                     </p>
                                 </div>
                             </div>
@@ -333,7 +333,7 @@ function App() {
                                         <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                                             <span className="text-primary text-2xl font-bold">4</span>
                                         </div>
-                                        <h3 className="font-semibold mb-2">Verify Anytime</h3>
+                                        <h3 className="font-semibold mb-2">Access Anytime</h3>
                                         <p className="text-gray-600 text-sm">Access and verify your certificate using ID or nickname</p>
                                     </div>
                                 </div>
@@ -365,7 +365,7 @@ function App() {
                                         <input
                                             type="text"
                                             name="name"
-                                            placeholder="Name"
+                                            placeholder="Certificate Name"
                                             value={certificateData.name}
                                             onChange={handleInputChange}
                                             className="form-input"
@@ -375,7 +375,7 @@ function App() {
                                         <input
                                             type="text"
                                             name="owner"
-                                            placeholder="Owner"
+                                            placeholder="Certified to (Owner name)"
                                             value={certificateData.owner}
                                             onChange={handleInputChange}
                                             className="form-input"
@@ -385,7 +385,7 @@ function App() {
                                         <input
                                             type="text"
                                             name="certification"
-                                            placeholder="Certification"
+                                            placeholder="Certification Authority"
                                             value={certificateData.certification}
                                             onChange={handleInputChange}
                                             className="form-input"
@@ -395,7 +395,7 @@ function App() {
                                         <input
                                             type="password"
                                             name="password"
-                                            placeholder="Set Password"
+                                            placeholder="Enter Password"
                                             value={certificateData.password}
                                             onChange={handleInputChange}
                                             className="form-input"
@@ -423,7 +423,7 @@ function App() {
                                     </div>
                                     <div className="mt-4">
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Upload Certificate (PDF)
+                                            Upload Certificate (.pdf, .jpg, .jpeg, .png)
                                         </label>
                                         <input
                                             type="file"
@@ -452,7 +452,7 @@ function App() {
                                 <h2 className={`text-2xl font-semibold mb-6 ${
                                     darkMode ? 'text-white' : 'text-gray-900'
                                 }`}>
-                                    Verify Certificate
+                                    View Certificate
                                 </h2>
                                 <div className="space-y-4">
                                     <div className="flex space-x-4 mb-4">
@@ -481,7 +481,7 @@ function App() {
                                         <input
                                             type="text"
                                             name="id"
-                                            placeholder="Enter Certificate ID"
+                                            placeholder="Certificate ID"
                                             value={certificateData.id}
                                             onChange={handleInputChange}
                                             className="form-input"
@@ -490,7 +490,7 @@ function App() {
                                         <input
                                             type="text"
                                             name="nickname"
-                                            placeholder="Enter Certificate Nickname"
+                                            placeholder="Certificate Nickname"
                                             value={certificateData.nickname}
                                             onChange={handleInputChange}
                                             className="form-input"
@@ -498,7 +498,7 @@ function App() {
                                     )}
                                     <input
                                         type="password"
-                                        placeholder="Enter Certificate Password"
+                                        placeholder="Password"
                                         value={verificationPassword}
                                         onChange={(e) => setVerificationPassword(e.target.value)}
                                         className="form-input"
@@ -512,7 +512,7 @@ function App() {
                                                 : 'btn-primary hover:shadow-lg'
                                         } transition duration-200`}
                                     >
-                                        {loading ? 'Verifying...' : 'Verify Certificate'}
+                                        {loading ? 'Verifying...' : 'Search'}
                                     </button>
                                 </div>
                             </div>
@@ -544,12 +544,12 @@ function App() {
                                             <p className="font-semibold text-gray-900">{CertificateInfo.certification || "N/A"}</p>
                                         </div>
                                     </div>
-                                    <div className="p-4 bg-gray-50 rounded-lg">
+                                    {/* <div className="p-4 bg-gray-50 rounded-lg">
                                         <p className="text-sm text-gray-600">Status</p>
                                         <p className={`font-semibold ${CertificateInfo.isAuthentic ? 'text-green-600' : 'text-red-600'}`}>
                                             {CertificateInfo.isAuthentic ? "✓ Authentic" : "✗ Tampered"}
                                         </p>
-                                    </div>
+                                    </div> */}
                                     <div className="p-4 bg-gray-50 rounded-lg">
                                         <p className="text-sm text-gray-600">IPFS CID</p>
                                         <p className="font-mono text-sm break-all">{CertificateInfo.cid || "N/A"}</p>
