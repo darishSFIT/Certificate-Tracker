@@ -1,6 +1,6 @@
-# **[Certificate Tracker](https://docs.google.com/presentation/d/1uJ8Jf2m942uzLYJcpbtVhoVfmlEGJeluoRO8wgf4QVM/edit?usp=sharing) - Setup Guide**  
+# **[Secure Certificate Storage](https://docs.google.com/presentation/d/1uJ8Jf2m942uzLYJcpbtVhoVfmlEGJeluoRO8wgf4QVM/edit?usp=sharing) - Setup Guide**  
 
-This guide provides step-by-step instructions to set up and run the **Certificate Verification System** using **Ganache, MetaMask, Remix IDE, and React**.
+This guide provides step-by-step instructions to set up and run the **Secure Certificate Storage** application using **Ganache, MetaMask, Remix IDE, and React**.
 
 ---
 
@@ -37,7 +37,7 @@ This guide provides step-by-step instructions to set up and run the **Certificat
    - Change **`http://127.0.0.1:8545`** → **`http://127.0.0.1:7545`** (or the port in Ganache).  
 3. Select the **1st account** and click **Deploy**.  
 4. In the **Terminal**, expand your **deployed contract**.  
-5. Copy the **contract address** (you’ll need it for the next steps).  
+5. Copy the **contract address** (you'll need it for the next steps).  
 
 ### **Add Certificate Data**  
 - Under **Deployed Contracts**, enter sample certificate details for later verification.  
@@ -59,8 +59,8 @@ or download & extract [this ZIP](https://github.com/darishSFIT/Certificate-Track
 1. Open `.env` file in your project.  
 2. Paste the **contract address** you copied from Remix IDE.  
 
-### **Update `app.js`**  
-1. Open **`app.js`**.  
+### **Update `src/App.js`**  
+1. Open **`src/App.js`**.  
 2. On **line 8**, update the `contractAddress` with the **same copied contract address**.  
 
 ---
@@ -73,7 +73,7 @@ npm install
 npm start
 ```
 
-🚀 Your **Certificate Tracker** application should now be running! 🎉  
+🚀 Your **Secure Certificate Storage** application should now be running! 🎉  
 
 ---
 
