@@ -8,7 +8,7 @@ import './App.css';
 
 //var cont_addr = "enter_here";
 //console.log("Contract Address:", cont_addr);
-const contractAddress = '0xd9633098c794ba2dceabb300807570869bb25bd2'; // Replace with your contract's address
+const contractAddress = '0x0e72ceb48399dc09de81e0da9b732dd7ae24329e'; // Replace with your contract's address
 
 // Pinata configuration
 const PINATA_API_KEY = 'e648d34f4dbbe45a91c7';
@@ -107,7 +107,12 @@ function App() {
             });
         } catch (error) {
             console.error("Detailed Error:", error);
-            alert("Certificate verification failed: " + (error.message || "Unknown error"));
+            // Check if the error message contains "Invalid password"
+            if (error.message.includes("Invalid password")) {
+                alert("Invalid Password");
+            } else {
+                alert("Certificate verification failed: " + (error.message || "Unknown error"));
+            }
         } finally {
             setLoading(false);
         }
@@ -154,6 +159,15 @@ function App() {
         }
     }
 
+    // Function to validate password strength
+    function isPasswordStrong(password) {
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumber = /\d/.test(password);
+        const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+        return hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
+    }
+
     // Function to add Certificate
     async function addCertificate() {
         if (!window.ethereum) {
@@ -161,18 +175,41 @@ function App() {
             return;
         }
 
-        if (!selectedFile) {
-            alert("Please select a file to upload");
-            return;
-        }
+        const missingFields = [];
 
+        // Check for required fields
+        if (!selectedFile) {
+            missingFields.push("File to upload");
+        }
+        if (!certificateData.id) {
+            missingFields.push("Certificate ID");
+        }
+        if (!certificateData.name) {
+            missingFields.push("Certificate Name");
+        }
+        if (!certificateData.owner) {
+            missingFields.push("Owner name");
+        }
+        if (!certificateData.certification) {
+            missingFields.push("Certification Authority");
+        }
+        if (!certificateData.password) {
+            missingFields.push("Password");
+        }
         if (certificateData.password !== certificateData.confirmPassword) {
             alert("Passwords do not match");
             return;
         }
 
-        if (!certificateData.password) {
-            alert("Please enter a password");
+        // Check for strong password
+        if (!isPasswordStrong(certificateData.password)) {
+            alert("Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.");
+            return;
+        }
+
+        // If there are missing fields, alert the user
+        if (missingFields.length > 0) {
+            alert("Please fill in the following required fields:\n- " + missingFields.join("\n- "));
             return;
         }
 
@@ -213,7 +250,12 @@ function App() {
             setSelectedFile(null);
         } catch (error) {
             console.error("Detailed Error:", error);
-            alert("❌ Failed to add Certificate: " + (error.message || "Unknown error"));
+            // Check for specific error messages
+            if (error.message.includes("missing revert data")) {
+                alert("Transaction failed: Please ensure all required fields are filled correctly.");
+            } else {
+                alert("❌ Failed to add Certificate: " + (error.message || "Unknown error"));
+            }
         } finally {
             setLoading(false);
         }
@@ -395,7 +437,7 @@ function App() {
                                         <input
                                             type="password"
                                             name="password"
-                                            placeholder="Enter Password"
+                                            placeholder="Set Password"
                                             value={certificateData.password}
                                             onChange={handleInputChange}
                                             className="form-input"
